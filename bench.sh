@@ -51,6 +51,8 @@ echo ' Just a feel test as the amount of updates will always change but likely t
 echo " So if you did a fresh image a full upgrade took $DIFF seconds"
 echo '**************************************************************************************************'
 
+curl http://www.nmacleod.com/public/sdbench.sh | sudo bash
+
 if [ ! `which hdparm` ]; then
   printf "Installing hdparm...\n"
   apt-get install -y hdparm
