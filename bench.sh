@@ -16,6 +16,27 @@
 #   $ curl http://www.nmacleod.com/public/sdbench.sh | sudo bash
 #
 # Author: Jeff Geerling, 2016
+getperfmbs()
+{
+  local cmd="${1}" fcount="${2}" ftime="${3}" bormb="${4}"
+  local result count _time perf
+
+  result="$(eval "${cmd}")"
+  count="$(echo "${result}" | awk "{print \$${fcount}}")"
+  _time="$(echo "${result}" | awk "{print \$${ftime}}")"
+  if [ "${bormb}" == "MB" ]; then
+    perf="$(echo "${count}" "${_time}" | awk '{printf("%0.2f", $1/$2)}')"
+  else
+    perf="$(echo "${count}" "${_time}" | awk '{printf("%0.2f", $1/$2/1024/1024)}')"
+  fi
+  echo "${perf}"
+  echo "${result}" >&2
+}
+
+getavgmbs()
+{
+  echo "${1} ${2} ${3}" | awk '{r=($1 + $2 + $3)/3.0; printf("%0.2f MB/s",r)}'
+}
 
 printf "\n"
 printf "Raspberry Pi Dramble microSD benchmarks\n"
@@ -95,41 +116,11 @@ printf "\n"
 
 DATAMB=${1:-512}
 FILENM=~/test.dat
-[ -f /flash/config.txt ] && CONFIG=/flash/config.txt || CONFIG=/boot/config.txt
-
-trap "rm -f ${FILENM}" EXIT
-
-[ "$(whoami)" == "root" ] || { echo "Must be run as root!"; exit 1; }
 
 HDCMD="hdparm -t --direct /dev/mmcblk0 | grep Timing"
 WRCMD="rm -f ${FILENM} && sync && dd if=/dev/zero of=${FILENM} bs=1M count=${DATAMB} conv=fsync 2>&1 | grep -v records"
 RDCMD="echo 3 > /proc/sys/vm/drop_caches && sync && dd if=${FILENM} of=/dev/null bs=1M 2>&1 | grep -v records"
-grep OpenELEC /etc/os-release >/dev/null && DDTIME=5 || DDTIME=6
 
-getperfmbs()
-{
-  local cmd="${1}" fcount="${2}" ftime="${3}" bormb="${4}"
-  local result count _time perf
-
-  result="$(eval "${cmd}")"
-  count="$(echo "${result}" | awk "{print \$${fcount}}")"
-  _time="$(echo "${result}" | awk "{print \$${ftime}}")"
-  if [ "${bormb}" == "MB" ]; then
-    perf="$(echo "${count}" "${_time}" | awk '{printf("%0.2f", $1/$2)}')"
-  else
-    perf="$(echo "${count}" "${_time}" | awk '{printf("%0.2f", $1/$2/1024/1024)}')"
-  fi
-  echo "${perf}"
-  echo "${result}" >&2
-}
-
-getavgmbs()
-{
-  echo "${1} ${2} ${3}" | awk '{r=($1 + $2 + $3)/3.0; printf("%0.2f MB/s",r)}'
-}
-
-systemctl stop kodi 2>/dev/null
-clear
 sync
 
 [ -f /sys/kernel/debug/mmc0/ios ] || mount -t debugfs none /sys/kernel/debug
