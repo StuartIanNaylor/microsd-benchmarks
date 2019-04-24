@@ -40,9 +40,16 @@ IOZONE_VERSION=iozone3_487
 cd $IOZONE_INSTALL_PATH
 
 # Install dependencies.
+START=$(date +%s)
 apt-get -y update
 apt-get -y dist-upgrade
 apt-get -y upgrade
+END=$(date +%s)
+DIFF=$(( $END - $START ))
+echo '**************************************************************************************************'
+echo ' Just a feel test as the amount of updates will always change but likely to be the same on the day'
+echo " So if you did a fresh image a full upgrade took $DIFF seconds"
+echo '**************************************************************************************************'
 
 if [ ! `which hdparm` ]; then
   printf "Installing hdparm...\n"
